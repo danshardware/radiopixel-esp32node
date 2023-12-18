@@ -23,9 +23,9 @@ public:
         led_strip_rmt_config_t rmt_config = {
             .clk_src = RMT_CLK_SRC_DEFAULT, //Use Default
             .resolution_hz = 0, // Use Default
-            .mem_block_symbols = 1024, // mem buffer size
+            .mem_block_symbols = 96, // mem buffer size. Each block is 32bits and there are 192 of them
             .flags = {
-                .with_dma = 1,
+                .with_dma = 0, // EPS32-C3 doesn't have DMA-enabled RMT
             }
         };
         ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &m_led_strip));

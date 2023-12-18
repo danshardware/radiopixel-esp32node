@@ -50,9 +50,9 @@ const uint8_t WIFI_CHANNEL = 6;
 #elif defined(RADIOPIXEL2_2)
 
 const auto LED_GPIO = GPIO_NUM_7;
-const int LED_COUNT = 60;
+const int LED_COUNT = 61;
 const int LED_REFRESH_RATE = 40; // Hz
-const int LED_MAX_INTENSITY = 128;
+const int LED_MAX_INTENSITY = 32;
 
 const auto BUTTON_1_GPIO = GPIO_NUM_1;
 const auto BUTTON_2_GPIO = GPIO_NUM_2;
@@ -109,43 +109,44 @@ extern "C" void app_main(void)
     // the event queues
     QueueHandle_t buttonQueue = xQueueCreate(10, sizeof( ButtonEvent ));
     QueueHandle_t playbackQueue = xQueueCreate(10, sizeof( PlaybackEvent ));
+    _playbackQueue = playbackQueue;
 
     // start the button task
-    ButtonConfig button_1_cfg{BUTTON_1_GPIO, 0, BUTTON_LONGPRESS_MS, 1, buttonQueue};
-    TaskHandle_t button_task;
-    xTaskCreate(ButtonTask, "buttons", 32*1024, &button_1_cfg, 5, &button_task);
+    // ButtonConfig button_1_cfg{BUTTON_1_GPIO, 0, BUTTON_LONGPRESS_MS, 1, buttonQueue};
+    // TaskHandle_t button_task;
+    // xTaskCreate(ButtonTask, "buttons", 32*1024, &button_1_cfg, 5, &button_task);
 
-    // start the local control task
-    bool master(gpio_get_level(button_1_cfg.gpio) == button_1_cfg.pressed_level);
-    ControllerConfig local{master, buttonQueue, playbackQueue};
-    TaskHandle_t local_task;
-    xTaskCreate(ControllerTask, "local", 32*1024, &local, 5, &local_task);
-
-    // setup wifi
-    nvs_flash_init();
-    app_wifi_init();
-    esp_now_init();
-    esp_now_peer_info_t broadcast;
-    memset(&broadcast, 0, sizeof(broadcast));
-    for (auto& byte : broadcast.peer_addr)
-    {
-        byte = 0xff;
-    }
-    //broadcast.channel = WIFI_CHANNEL;
-    esp_now_add_peer(&broadcast);
-    _playbackQueue = playbackQueue;
-    esp_now_register_recv_cb(OnDataRecv);
-
-    // start the playback task
-    auto strip(new EspStrip(LED_GPIO, LED_COUNT));
-    PlaybackConfig playbackConfig{playbackQueue, strip, LED_REFRESH_RATE, LED_MAX_INTENSITY};
-    TaskHandle_t playback_task;
-    xTaskCreate(PlaybackTask, "playback", 32*1024, &playbackConfig, 5, &playback_task);
+    // // start the local control task
+    // bool master(gpio_get_level(button_1_cfg.gpio) == button_1_cfg.pressed_level);
+    // ControllerConfig local{master, buttonQueue, playbackQueue};
+    // TaskHandle_t local_task;
+    // xTaskCreate(ControllerTask, "local", 32*1024, &local, 5, &local_task);
 
     // put idle step in the background
     PlaybackEvent idle{PlaybackEvent::Source::Background, 
         PlaybackEvent::Command::Play, Pattern::idleStep().command};
     xQueueSendToBack(playbackQueue, &idle, 0);
 
-    ESP_LOGI("main", "started, master: %s", master?"true":"false");
+    // start the playback task
+    auto strip(new EspStrip(LED_GPIO, LED_COUNT));
+    PlaybackConfig playbackConfig{playbackQueue, strip, LED_REFRESH_RATE, LED_MAX_INTENSITY};
+    TaskHandle_t playback_task;
+    xTaskCreate(PlaybackTask, "playback", 32*1024, &playbackConfig, 10, &playback_task);
+
+    // // setup wifi
+    // nvs_flash_init();
+    // app_wifi_init();
+    // esp_now_init();
+    // esp_now_peer_info_t broadcast;
+    // memset(&broadcast, 0, sizeof(broadcast));
+    // for (auto& byte : broadcast.peer_addr)
+    // {
+    //     byte = 0xff;
+    // }
+    // //broadcast.channel = WIFI_CHANNEL;
+    // esp_now_add_peer(&broadcast);
+    // esp_now_register_recv_cb(OnDataRecv);
+
+
+    // ESP_LOGI("main", "started, master: %s", master?"true":"false");
 }
