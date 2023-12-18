@@ -104,7 +104,7 @@ void OnDataRecv(const esp_now_recv_info_t * esp_now_info, const uint8_t *data, i
 extern "C" void app_main(void)
 {
     // Dan said do this .. ?
-    gpio_set_level(GPIO_NUM_6, 1);
+    // gpio_set_level(GPIO_NUM_6, 1);
 
     // the event queues
     QueueHandle_t buttonQueue = xQueueCreate(10, sizeof( ButtonEvent ));

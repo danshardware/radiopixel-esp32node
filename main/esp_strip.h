@@ -21,7 +21,12 @@ public:
             .flags = 0
         };
         led_strip_rmt_config_t rmt_config = {
-            .resolution_hz = 10 * 1000 * 1000, // 10MHz
+            .clk_src = RMT_CLK_SRC_DEFAULT, //Use Default
+            .resolution_hz = 0, // Use Default
+            .mem_block_symbols = 1024, // mem buffer size
+            .flags = {
+                .with_dma = 1,
+            }
         };
         ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &m_led_strip));
         /* Set all LED off to clear all pixels */
